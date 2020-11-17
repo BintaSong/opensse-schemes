@@ -75,9 +75,24 @@ do
 kw_list=""
 for i in `seq 0 7`;
 do
-	for j in `seq 0 0`;
+	for j in `seq 0 10`;
 	do
 		kw_list=$kw_list" "$kKeyword10GroupBase"4_"$i"_"$j
+	done
+done
+./fastio_client -b $db_file $kw_list
+done
+
+
+
+for i in `seq 0 3`;
+do
+kw_list=""
+for i in `seq 0 7`;
+do
+	for j in `seq 0 10`;
+	do
+		kw_list=$kw_list" "$kKeyword10GroupBase"5_"$i"_"$j
 	done
 done
 ./fastio_client -b $db_file $kw_list

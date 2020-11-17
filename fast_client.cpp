@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
                  log_stream << ", ";
              }
              first = false;
-             log_stream << res;
+             log_stream << hex_string(res);
             
              logger_mtx.unlock();
         };

@@ -126,9 +126,14 @@ int main(int argc, char** argv) {
             client_runner->async_update(s, index);
         };
         
+std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
         client_runner->start_update_session();
         sse::sophos::gen_db(rnd_entries_count, gen_callback);
         client_runner->end_update_session();
+std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+double duration = (double)std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();  
+sse::logger::log(sse::logger::INFO)<< "Time batch update:"  << duration  << " ms" <<std::endl;
+
     }
     
     for (std::string &kw : keywords) {
@@ -146,7 +151,7 @@ int main(int argc, char** argv) {
                  log_stream << ", ";
              }
              first = false;
-             log_stream << res;
+             log_stream <<  hex_string(res); // ATTENTION: in fastio, identifier is not stored as hex form.
             
              logger_mtx.unlock();
         };

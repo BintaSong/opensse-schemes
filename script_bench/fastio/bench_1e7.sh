@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-db_file="db_bench_1e7.csdb"
+db_file="db_1e7.csdb"
 
 kw_list=""
 kKeywordGroupBase="Group-"
@@ -15,7 +15,7 @@ do
 	done
 done
 
-./fast_client -b $db_file $kw_list
+./fastio_client -b $db_file $kw_list
 
 kw_list=""
 for i in `seq 0 7`;
@@ -25,7 +25,7 @@ do
 		kw_list=$kw_list" "$kKeyword10GroupBase"2_"$i"_"$j
 	done
 done
-./fast_client -b $db_file $kw_list
+./fastio_client -b $db_file $kw_list
 
 kw_list=""
 for i in `seq 0 7`;
@@ -35,7 +35,7 @@ do
 		kw_list=$kw_list" "$kKeyword10GroupBase"3_"$i"_"$j
 	done
 done
-./fast_client -b $db_file $kw_list
+./fastio_client -b $db_file $kw_list
 
 kw_list=""
 for i in `seq 0 7`;
@@ -45,7 +45,7 @@ do
 		kw_list=$kw_list" "$kKeyword10GroupBase"4_"$i"_"$j
 	done
 done
-./fast_client -b $db_file $kw_list
+./fastio_client -b $db_file $kw_list
 
 for i in `seq 0 3`;
 do
@@ -57,7 +57,7 @@ do
 		kw_list=$kw_list" "$kKeyword10GroupBase"5_"$i"_"$j
 	done
 done
-./fast_client -b $db_file $kw_list
+./fastio_client -b $db_file $kw_list
 done
 
 	# echo $kw_list

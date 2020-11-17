@@ -110,8 +110,8 @@ std::list<index_type> FastioServer::search(const SearchRequest& req)
             logger::log(logger::DBG) << "Previous Cacheed indexes length: " << len << std::endl;
         }
 
-        for(size_t t = 0; t < len; t += kUpdateTokenSize) {
-            std::string index = cache_indexes.substr(t, kUpdateTokenSize);
+        for(size_t t = 0; t < len; t += 2*kUpdateTokenSize) {
+            std::string index = cache_indexes.substr(t, 2*kUpdateTokenSize);
             results.push_back( index );
         }
 
@@ -168,7 +168,7 @@ std::list<index_type> FastioServer::search(const SearchRequest& req)
                 
                 // unmask r
                 r = xor_mask(r, mask);
-                results.push_back(r);
+                results.push_back(hex_string(r));
 
                 post_callback( hex_string(r) );
 
@@ -198,11 +198,11 @@ std::list<index_type> FastioServer::search(const SearchRequest& req)
             }
 
             // parse cache index, add into results
-            for(size_t t = 0; t < len; t += kUpdateTokenSize) {
-                std::string index = cache_indexes.substr(t, kUpdateTokenSize);
+            for(size_t t = 0; t < len; t += 2*kUpdateTokenSize) {
+                std::string index = cache_indexes.substr(t, 2*kUpdateTokenSize);
                 
                 results.push_back( (index) );
-                post_callback( hex_string(index) );
+                post_callback( index );
             }
 
             if (logger::severity() <= logger::DBG) {
@@ -244,11 +244,11 @@ std::list<index_type> FastioServer::search(const SearchRequest& req)
 
                 size_t len = cache_indexes.size();
         
-                for(size_t t = 0; t < len; t += kUpdateTokenSize) {
-                    std::string index = pre_cached_indexes.substr(t, kUpdateTokenSize);
+                for(size_t t = 0; t < len; t += 2*kUpdateTokenSize) {
+                    std::string index = pre_cached_indexes.substr(t, 2*kUpdateTokenSize);
 
                     res_mutex.lock();
-                    results.push_back(index); 
+                    results.push_back(hex_string(index)); 
                     res_mutex.unlock();
                 }
             }
@@ -291,12 +291,12 @@ std::list<index_type> FastioServer::search(const SearchRequest& req)
                     r = xor_mask(r, mask);
 
                     res_mutex.lock();
-                    results.push_back( (r));
+                    results.push_back(r);
                     res_mutex.unlock();
 
                     // TODO ==> might creating a cache_job here be better? need to test!
                     cache_mutex.lock();
-                    cache_indexes += r;  // append cache_indexes on the fly
+                    cache_indexes += hex_string(r);  // append cache_indexes on the fly
                     cache_mutex.unlock();
                 
                 }else {
@@ -356,14 +356,14 @@ std::list<index_type> FastioServer::search(const SearchRequest& req)
 
                 size_t len = pre_cached_indexes.size();
         
-                for(size_t t = 0; t < len; t += kUpdateTokenSize) {
-                    std::string index = pre_cached_indexes.substr(t, kUpdateTokenSize);
+                for(size_t t = 0; t < len; t += 2*kUpdateTokenSize) {
+                    std::string index = pre_cached_indexes.substr(t, 2*kUpdateTokenSize);
 
                     res_mutex.lock();
-                    results.push_back( (index));
+                    results.push_back(hex_string(index));
                     res_mutex.unlock();
 
-                    post_callback( (index));
+                    post_callback(index);
                 }
             }
         };
@@ -406,14 +406,14 @@ std::list<index_type> FastioServer::search(const SearchRequest& req)
 
 
                     res_mutex.lock();
-                    results.push_back( (r) );
+                    results.push_back(hex_string(r));
                     res_mutex.unlock();
 
                     cache_mutex.lock();
-                    cache_indexes += r;   // append cache_indexes on the fly
+                    cache_indexes += hex_string(r);   // append cache_indexes on the fly
                     cache_mutex.unlock();
 
-                    post_callback((r));
+                    post_callback(hex_string(r));
 
                 }else {
                     logger::log(logger::ERROR) << "i = "<< i << ", We were supposed to find something!" << std::endl;
@@ -470,11 +470,11 @@ std::list<index_type> FastioServer::search_parallel_full(const SearchRequest& re
 
             size_t len = pre_cached_indexes.size();
         
-            for(size_t t = 0; t < len; t += kUpdateTokenSize) {
-                std::string index = pre_cached_indexes.substr(t, kUpdateTokenSize);
+            for(size_t t = 0; t < len; t += 2*kUpdateTokenSize) {
+                std::string index = pre_cached_indexes.substr(t, 2*kUpdateTokenSize);
 
                 res_mutex.lock();
-                results.push_back( (index) );
+                results.push_back( hex_string(index) );
                 res_mutex.unlock();
             }
         }
@@ -495,11 +495,11 @@ std::list<index_type> FastioServer::search_parallel_full(const SearchRequest& re
         index_type v = xor_mask(r, derivation_prf.prf(st_string + '1'));
         
         res_mutex.lock();
-        results.push_back((v));
+        results.push_back(hex_string(v));
         res_mutex.unlock();
 
         cache_mutex.lock();
-        cache_indexes += v;   // append cache_indexes on the fly
+        cache_indexes += hex_string(v);   // append cache_indexes on the fly
         cache_mutex.unlock();
 
     };
@@ -587,11 +587,11 @@ std::list<index_type> FastioServer::search_parallel_full_callback(const SearchRe
 
             size_t len = pre_cached_indexes.size();
         
-            for(size_t t = 0; t < len; t += kUpdateTokenSize) {
-                std::string index = pre_cached_indexes.substr(t, kUpdateTokenSize);
+            for(size_t t = 0; t < len; t += 2*kUpdateTokenSize) {
+                std::string index = pre_cached_indexes.substr(t, 2*kUpdateTokenSize);
 
                 res_mutex.lock();
-                results.push_back( (index) );
+                results.push_back( hex_string(index) );
                 res_mutex.unlock();
 
                 post_callback(index);        
@@ -615,14 +615,14 @@ std::list<index_type> FastioServer::search_parallel_full_callback(const SearchRe
         index_type v = xor_mask(r, derivation_prf.prf(st_string + '1'));
         
         res_mutex.lock();
-        results.push_back((v));
+        results.push_back(hex_string(v));
         res_mutex.unlock();
 
         cache_mutex.lock();
-        cache_indexes += (v);   // append cache_indexes on the fly
+        cache_indexes += hex_string(v);   // append cache_indexes on the fly
         cache_mutex.unlock();
 
-        post_callback((v));    
+        post_callback(hex_string(v));    
         
     };
 

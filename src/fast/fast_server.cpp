@@ -80,7 +80,7 @@ std::list<index_type> FastServer::search(const SearchRequest& req)
             logger::log(logger::DBG) << "Derived token: " << hex_string(ut) << std::endl;
         }
 
-        bool found = edb_.get(ut,r);
+        bool found = edb_.get(ut, r);
         
         if (found) {
             if (logger::severity() <= logger::DBG) {
@@ -91,7 +91,7 @@ std::list<index_type> FastServer::search(const SearchRequest& req)
 
             index_type index = r.substr(0, 8); // r[0...7]
 
-            results.push_back( hex_string(index) );
+            results.push_back( (index) );
             
             st = r.substr(8, 16);       // r[8...24]
             // logger::log(logger::INFO) << "ST: " << hex_string(st) << std::endl; 
@@ -120,7 +120,7 @@ std::list<index_type> FastServer::search(const SearchRequest& req)
             update_token_type ut;
             std::array<uint8_t, kUpdateTokenSize> mask;
 
-            logger::log(logger::INFO) << "ST: " << hex_string(st) << std::endl;
+            logger::log(logger::DBG) << "ST: " << hex_string(st) << std::endl;
 
             gen_update_token_masks(req.derivation_key, st, ut, mask);
             
@@ -141,7 +141,7 @@ std::list<index_type> FastServer::search(const SearchRequest& req)
                 index_type index = r.substr(0, 8); // r[0...7]
 
                 results.push_back(index);
-                post_callback( hex_string(index) );
+                post_callback( (index) );
 
                 // logger::log(logger::INFO) << "1-st: " << hex_string(r) << std::endl;
 
