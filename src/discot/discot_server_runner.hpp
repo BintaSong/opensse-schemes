@@ -18,18 +18,12 @@
 // along with Sophos.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-//
-// Forward Private Searchable Symmetric Encryption with Optimized I/O Efficiency
-//      
-//      FASTIO - by Xiangfu Song
-//      bintasong@gmail.com
-//
 
 #pragma once
 
-#include "fastio/fastio_server.hpp"
+#include "discot/discot_server.hpp"
 
-#include "fastio.grpc.pb.h"
+#include "discot.grpc.pb.h"
 
 #include <string>
 #include <memory>
@@ -39,47 +33,47 @@
 #include <grpc++/server_context.h>
 
 namespace sse {
-namespace fastio {
+namespace discot {
 
-    class FastioImpl final : public fastio::Fastio::Service {
+    class DiscotImpl final : public discot::Discot::Service {
     public:
-        explicit FastioImpl(const std::string& path);
+        explicit DiscotImpl(const std::string& path);
         
         grpc::Status setup(grpc::ServerContext* context,
-                           const fastio::SetupMessage* request,
+                           const discot::SetupMessage* request,
                            google::protobuf::Empty* e) override;
         
         grpc::Status search(grpc::ServerContext* context,
-                            const fastio::SearchRequestMessage* request,
-                            grpc::ServerWriter<fastio::SearchReply>* writer) override;
+                            const discot::SearchRequestMessage* request,
+                            grpc::ServerWriter<discot::SearchReply>* writer) override;
         
         grpc::Status sync_search(grpc::ServerContext* context,
-                            const fastio::SearchRequestMessage* request,
-                            grpc::ServerWriter<fastio::SearchReply>* writer);
+                            const discot::SearchRequestMessage* request,
+                            grpc::ServerWriter<discot::SearchReply>* writer);
         
         grpc::Status async_search(grpc::ServerContext* context,
-                                  const fastio::SearchRequestMessage* request,
-                                  grpc::ServerWriter<fastio::SearchReply>* writer);
+                                  const discot::SearchRequestMessage* request,
+                                  grpc::ServerWriter<discot::SearchReply>* writer);
         
         grpc::Status update(grpc::ServerContext* context,
-                            const fastio::UpdateRequestMessage* request,
+                            const discot::UpdateRequestMessage* request,
                             google::protobuf::Empty* e) override;
         
         grpc::Status bulk_update(grpc::ServerContext* context,
-                                 grpc::ServerReader<fastio::UpdateRequestMessage>* reader,
+                                 grpc::ServerReader<discot::UpdateRequestMessage>* reader,
                                  google::protobuf::Empty* e) override;
         
-        std::ostream& print_stats(std::ostream& out) const;
+        // std::ostream& print_stats(std::ostream& out) const;
 
         bool search_asynchronously() const;
         void set_search_asynchronously(bool flag);
         
         
     private:
-        static const std::string cache_map_file;
+        static const std::string pk_file;
         static const std::string pairs_map_file;
 
-        std::unique_ptr<FastioServer> server_;
+        std::unique_ptr<DiscotServer> server_;
         std::string storage_path_;
         
         std::mutex update_mtx_;
@@ -90,6 +84,6 @@ namespace fastio {
     SearchRequest message_to_request(const SearchRequestMessage* mes);
     UpdateRequest message_to_request(const UpdateRequestMessage* mes);
 
-    void run_fastio_server(const std::string &address, const std::string& server_db_path, grpc::Server **server_ptr, bool async_search);
-} // namespace fastio
+    void run_discot_server(const std::string &address, const std::string& server_db_path, grpc::Server **server_ptr, bool async_search);
+} // namespace sophos
 } // namespace sse

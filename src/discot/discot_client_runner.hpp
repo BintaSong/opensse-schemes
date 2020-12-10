@@ -18,18 +18,12 @@
 // along with Sophos.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-//
-// Forward Private Searchable Symmetric Encryption with Optimized I/O Efficiency
-//      
-//      FASTIO - by Xiangfu Song
-//      bintasong@gmail.com
-//
 
 #pragma once
 
-#include "fastio/fastio_client.hpp"
+#include "discot_client.hpp"
 
-#include "fastio.grpc.pb.h"
+#include "discot.grpc.pb.h"
 
 #include <memory>
 #include <thread>
@@ -40,39 +34,40 @@
 #include <condition_variable>
 
 namespace sse {
-namespace fastio {
+namespace discot {
 
-class FastioClientRunner {
+class DiscotClientRunner { 
 public:
-    FastioClientRunner(const std::string& address, const std::string& path, size_t setup_size = 1e5, uint32_t n_keywords = 1e4);
-    ~FastioClientRunner();
+    DiscotClientRunner(const std::string& address, const std::string& path, size_t setup_size = 1e5, uint32_t n_keywords = 1e4);
+    ~DiscotClientRunner();
     
-    const FastioClient& client() const;
+    const DiscotClient& client() const;
     
-    std::list<index_type> search(const std::string& keyword, std::function<void(index_type)> receive_callback = NULL) const;
-    void update(const std::string& keyword, index_type index);
-    void async_update(const std::string& keyword, index_type index);
+    std::list<uint64_t> search(const std::string& keyword, std::function<void(uint64_t)> receive_callback = NULL) const; 
+    void update(const std::string& keyword, uint64_t index); 
+    void async_update(const std::string& keyword, uint64_t index); 
+    void prepare_new_batch();
 
     void start_update_session();
     void end_update_session();
-    void update_in_session(const std::string& keyword, index_type index);
+    void update_in_session(const std::string& keyword, uint64_t index);
 
     void wait_updates_completion();
     
-    // bool load_inverted_index(const std::string& path);
+    bool load_inverted_index(const std::string& path);
 
-    std::ostream& print_stats(std::ostream& out) const;
+    // std::ostream& print_stats(std::ostream& out) const;
 
 private:
     void update_completion_loop();
     
     bool send_setup(const size_t setup_size) const;
     
-    std::unique_ptr<fastio::Fastio::Stub> stub_;
-    std::unique_ptr<FastioClient> client_;
+    std::unique_ptr<discot::Discot::Stub> stub_;
+    std::unique_ptr<DiscotClient> client_;
     
     struct {
-        std::unique_ptr<grpc::ClientWriter<fastio::UpdateRequestMessage>> writer;
+        std::unique_ptr<grpc::ClientWriter<discot::UpdateRequestMessage>> writer;
         std::unique_ptr<::grpc::ClientContext> context;
         ::google::protobuf::Empty response;
         
@@ -89,10 +84,10 @@ private:
     bool stop_update_completion_thread_;
 
     std::mutex update_mtx_;
-};
+}; 
 
 SearchRequestMessage request_to_message(const SearchRequest& req);
 UpdateRequestMessage request_to_message(const UpdateRequest& req);
 
-} // namespace fastio
+} // namespace sophos
 } // namespace sse

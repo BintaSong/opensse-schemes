@@ -18,38 +18,29 @@
 // along with Sophos.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-//
-// Forward Private Searchable Symmetric Encryption with Optimized I/O Efficiency
-//      
-//      FASTIO - by Xiangfu Song
-//      bintasong@gmail.com
-//
-
 #pragma once
 
 #include <string>
 #include <array>
-#include <iostream>
 
 #include <sse/crypto/tdp.hpp>
 #include <sse/crypto/prf.hpp>
 
 namespace sse {
-    namespace fastio {
+    namespace discot {
 
+        constexpr size_t kSearchTokenSize = crypto::Tdp::kMessageSize;
         constexpr size_t kDerivationKeySize = 16;
-        constexpr size_t kStateKeySize = 16;
-        constexpr size_t kUpdateTokenSize = 8; // should be 8
-        constexpr size_t kIndexSize = 8;
+        constexpr size_t kUpdateTokenSize = 16;
         
-        typedef std::string search_token_type; 
-        typedef std::string update_token_type;
-        typedef std::string index_type;  // length should be 8!
+        typedef std::array<uint8_t, kSearchTokenSize> search_token_type;
+        typedef std::array<uint8_t, kUpdateTokenSize> update_token_type;
+        typedef uint64_t index_type;
         
         
         struct SearchRequest
         {
-            search_token_type   token;  // state info
+            search_token_type   token;
             std::string         derivation_key;
             uint32_t            add_count;
         };
@@ -61,9 +52,10 @@ namespace sse {
             index_type          index;
         };
         
-        void gen_update_token_masks(const std::string &deriv_key, 
-                                    const std::string search_token,  // st
-                                    update_token_type &update_token, // ut
-                                    std::array<uint8_t, kUpdateTokenSize> &mask); // prf_{k}(st)
+        void gen_update_token_masks(const std::string &deriv_key,
+                                    const uint8_t* search_token,
+                                    const uint32_t local_counter,
+                                    update_token_type &update_token,
+                                    std::array<uint8_t, kUpdateTokenSize> &mask);
     }
 }

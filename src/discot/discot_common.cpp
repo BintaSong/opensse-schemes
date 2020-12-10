@@ -6,14 +6,7 @@
 //  Copyright © 2017 Raphael Bost. All rights reserved.
 //
 
-//
-// Forward Private Searchable Symmetric Encryption with Optimized I/O Efficiency
-//      
-//      FASTIO - by Xiangfu Song
-//      bintasong@gmail.com
-//
-
-#include "fastio_common.hpp"
+#include "discot_common.hpp"
 
 
 #include <sse/crypto/prf.hpp>
@@ -21,19 +14,20 @@
 #include <cstring>
 
 namespace sse {
-    namespace fastio {
+    namespace discot {
         
         void gen_update_token_masks(const std::string &deriv_key,
-                                    const std::string search_token,
+                                    const uint8_t* search_token,
+                                    const uint32_t local_counter,
                                     update_token_type &update_token,
                                     std::array<uint8_t, kUpdateTokenSize> &mask)
         {
             auto derivation_prf = crypto::Prf<kUpdateTokenSize>(deriv_key);
-           
-            update_token = derivation_prf.prf_string(search_token + '0').erase(kUpdateTokenSize);
-                        
-            mask = derivation_prf.prf(search_token + '1');
+
+            std::string st_string(reinterpret_cast<const char*>(search_token), kSearchTokenSize);
+            
+            update_token = derivation_prf.prf(st_string + std::to_string(local_counter) + '0');
+            mask = derivation_prf.prf(st_string + std::to_string(local_counter) + '1');
         }
-        
     }
 }

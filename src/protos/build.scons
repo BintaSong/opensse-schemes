@@ -28,6 +28,16 @@ fastio_gprc_out = env.Grpc([], 'fastio.proto',
        PROTOPATH=[Dir('.')], GRPCPPOUT=Dir('..').abspath)
 
 fastio_out = fastio_proto_out + fastio_gprc_out
+
+
+discot_proto_out = env.Protoc([], 'discot.proto',
+       PROTOPATH=[Dir('.')], PROTOCPPOUT=Dir('..').abspath)
+
+discot_gprc_out = env.Grpc([], 'discot.proto',
+       PROTOPATH=[Dir('.')], GRPCPPOUT=Dir('..').abspath)
+
+discot_out = discot_proto_out + discot_gprc_out
+
 #*******
 
 
@@ -44,5 +54,6 @@ out['sophos'] = sophos_out
 out['diana'] = diana_out
 out['fast'] = fast_out
 out['fastio'] = fastio_out
+out['discot'] = discot_out
 
 Return('out')
