@@ -212,7 +212,7 @@ namespace sse {
             search_token_type st; 
             
             // get (and possibly construct) the keyword index
-            std::string seed = get_keyword_index(keyword); 
+            std::string seed = get_keyword_index(keyword);
             
             // retrieve the counter
             //uint32_t kw_counter;

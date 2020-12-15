@@ -104,14 +104,16 @@ objects = SConscript('src/build.scons', exports='env', variant_dir='build')
 env.Depends(objects["sophos"],[crypto_lib_target , db_parser_target])
 #env.Depends(objects["janus"],[crypto_lib_target, db_parser_target])
 env.Depends(objects["fast"],[crypto_lib_target , db_parser_target])
-env.Depends(objects["fastio"],[crypto_lib_target , db_parser_target])
+#env.Depends(objects["fastio"],[crypto_lib_target , db_parser_target])
 env.Depends(objects["discot"],[crypto_lib_target , db_parser_target])
+env.Depends(objects["discog"],[crypto_lib_target , db_parser_target])
 
 # clean_crypto = env.Command("clean_crypto", "", "cd third_party/crypto && scons -c lib")
 # env.Alias('clean_deps', [clean_crypto])
 
 #Clean(objects["sophos"] + objects["diana"] + objects["janus"] + objects["fast"] + objects["fastio"], 'build')
-Clean(objects["fast"] + objects["fastio"] + objects["sophos"]+ objects["discot"], 'build')
+Clean(objects["fast"] + objects["sophos"]+ objects["discot"] + objects["discog"], 'build')
+#Clean(objects["discot"] + objects["discog"], 'build')
 
 outter_env = env.Clone()
 outter_env.Append(CPPPATH = ['build'])
@@ -133,19 +135,28 @@ fast_server       = outter_env.Program('fast_server',   ['fast_server.cpp']   + 
 
 
 #fastio_debug_prog   = outter_env.Program('fastio_debug',    ['test_fastio.cpp']     + objects["fastio"])
-fastio_client       = outter_env.Program('fastio_client',   ['fastio_client.cpp']   + objects["fastio"])
-fastio_server       = outter_env.Program('fastio_server',   ['fastio_server.cpp']   + objects["fastio"])
+#fastio_client       = outter_env.Program('fastio_client',   ['fastio_client.cpp']   + objects["fastio"])
+#fastio_server       = outter_env.Program('fastio_server',   ['fastio_server.cpp']   + objects["fastio"])
 
 discot_client       = outter_env.Program('discot_client',   ['discot_client.cpp']   + objects["discot"])
 discot_server       = outter_env.Program('discot_server',   ['discot_server.cpp']   + objects["discot"])
 
+discoh_client       = outter_env.Program('discoh_client',   ['discoh_client.cpp']   + objects["discoh"])
+discoh_server       = outter_env.Program('discoh_server',   ['discoh_server.cpp']   + objects["discoh"])
+
+discog_debug_prog    = outter_env.Program('discog_debug',     ['test_discog.cpp']      + objects["discog"])
+discog_client       = outter_env.Program('discog_client',   ['discog_client.cpp']   + objects["discog"])
+discog_server       = outter_env.Program('discog_server',   ['discog_server.cpp']   + objects["discog"])
 
 env.Alias('sophos', [sophos_debug_prog, sophos_client, sophos_server])
 #env.Alias('diana', [diana_debug_prog, diana_client, diana_server])
 #env.Alias('janus', [janus_debug_prog])
 env.Alias('fast', [fast_debug_prog, fast_client, fast_server])
-env.Alias('fastio', [fastio_client, fastio_server])
+#env.Alias('fastio', [fastio_client, fastio_server])
 env.Alias('discot', [discot_client, discot_server])
+env.Alias('discoh', [discoh_client, discoh_server])
+env.Alias('discog', [discog_debug_prog, discog_client, discog_server])
 
 #env.Default(['sophos','diana','janus', 'fast', 'fastio'])
-env.Default(['fast', 'fastio', 'sophos', 'discot'])
+env.Default(['fast', 'sophos', 'discot','discoh', 'discog'])
+#env.Default(['discot', 'discog'])

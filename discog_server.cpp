@@ -1,16 +1,15 @@
 //
-//  server_main.cpp
-//  sophos
+//  discog_server.cpp
+//  Discog
 //
-//  Created by Raphael Bost on 03/04/2016.
+//  Created by Raphael Bost on 20/07/2016.
 //  Copyright © 2016 Raphael Bost. All rights reserved.
 //
 
-// updated by Xiangfu Song for discot, a hybird index based SSE
+#include "discog/server_runner.hpp"
+#include "utils/logger.hpp"
 
-
-#include "discot/discot_server_runner.hpp"
-#include "src/utils/logger.hpp"
+#include <grpc++/server.h>
 
 #include <sse/crypto/utils.hpp>
 
@@ -33,7 +32,7 @@ void exit_handler(int signal)
 int main(int argc, char** argv) {
 
     sse::logger::set_severity(sse::logger::DBG);
-    sse::logger::set_benchmark_file("benchmark_discot_server.out");
+    sse::logger::set_benchmark_file("benchmark_discog_server.out");
 
     std::signal(SIGTERM, exit_handler);
     std::signal(SIGINT, exit_handler);
@@ -79,13 +78,13 @@ int main(int argc, char** argv) {
     
     if (server_db.size()==0) {
         sse::logger::log(sse::logger::WARNING) << "Server database not specified" << std::endl;
-        sse::logger::log(sse::logger::WARNING) << "Using \'test.ssdb\' by default" << std::endl;
-        server_db = "test.ssdb";
+        sse::logger::log(sse::logger::WARNING) << "Using \'test.dsdb\' by default" << std::endl;
+        server_db = "test.dsdb";
     }else{
         sse::logger::log(sse::logger::INFO) << "Running client with database " << server_db << std::endl;
     }
 
-    sse::discot::run_discot_server("0.0.0.0:4240", server_db, &server_ptr__, async_search);
+    sse::discog::run_discog_server("0.0.0.0:4241", server_db, &server_ptr__, async_search);
     
     sse::crypto::cleanup_crypto_lib();
 

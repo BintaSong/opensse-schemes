@@ -19,7 +19,7 @@
 //
 
 
-#include "discot_server.hpp"
+#include "discoh_server.hpp"
 
 
 #include "utils/utils.hpp"
@@ -30,28 +30,27 @@
 #include <algorithm>
 
 namespace sse {
-namespace discot {
+namespace discoh {
     
 
-DiscotServer::DiscotServer(const std::string& db_path, const std::string& tdp_pk) :
-edb_(db_path), public_tdp_(tdp_pk, 2*std::thread::hardware_concurrency())
+DiscohServer::DiscohServer(const std::string& db_path, const uint32_t& hashchain_size) :
+edb_(db_path), hashchain_size_(hashchain_size)
 {
     
 }
 
-DiscotServer::DiscotServer(const std::string& db_path, const size_t tm_setup_size, const std::string& tdp_pk) :
-    edb_(db_path), /*edb_(db_path, tm_setup_size),*/
-    public_tdp_(tdp_pk, 2*std::thread::hardware_concurrency())
+DiscohServer::DiscohServer(const std::string& db_path, const size_t tm_setup_size, const uint32_t& hashchain_size) :
+    edb_(db_path), hashchain_size_(hashchain_size)
 {
     
 }
 
-const std::string DiscotServer::public_key() const
+const uint32_t DiscohServer::hashchain_size() const
 {
-    return public_tdp_.public_key();
+    return hashchain_size_;
 }
 
-std::list<index_type> DiscotServer::search(const SearchRequest& req)
+std::list<index_type> DiscohServer::search(const SearchRequest& req)
 {
     std::list<index_type> results;
     
@@ -69,16 +68,16 @@ std::list<index_type> DiscotServer::search(const SearchRequest& req)
         size_t j = 0;
         bool found = false;
         index_type r;
-        update_token_type ut;
+        std::string ut;
         std::array<uint8_t, kUpdateTokenSize> mask;
         do {
-            gen_update_token_masks(req.derivation_key, st.data(), j, ut, mask); 
+            gen_update_token_masks(req.derivation_key, st, j, ut, mask); 
 
             if (logger::severity() <= logger::DBG) { 
                 logger::log(logger::DBG) << "Derived token: " << hex_string(ut) << std::endl; 
             }
-
-            found = edb_.get(ut, r);
+            //std::string ut;
+            found = edb_.get((const uint8_t*) ut.c_str(), ut.size(), r);
             
             if (found) {
                 if (logger::severity() <= logger::DBG) { 
@@ -98,14 +97,13 @@ std::list<index_type> DiscotServer::search(const SearchRequest& req)
             logger::log(logger::DBG) << i << ", " << j << std::endl;
             j++;
         } while(found);
-
-        st = public_tdp_.eval(st);
+        st = crypto::Hash::hash(st);
     } 
     
     return results; 
 }
 
-    void DiscotServer::search_callback(const SearchRequest& req, std::function<void(index_type)> post_callback)
+    void DiscohServer::search_callback(const SearchRequest& req, std::function<void(index_type)> post_callback)
     {
         search_token_type st = req.token;
         
@@ -124,13 +122,13 @@ std::list<index_type> DiscotServer::search(const SearchRequest& req)
             update_token_type ut; 
             std::array<uint8_t, kUpdateTokenSize> mask;
             do {
-                gen_update_token_masks(req.derivation_key, st.data(), j, ut, mask); 
+                gen_update_token_masks(req.derivation_key, st, j, ut, mask); 
 
                 if (logger::severity() <= logger::DBG) { 
                     logger::log(logger::DBG) << "Derived token: " << hex_string(ut) << std::endl; 
                 } 
 
-                found = edb_.get(ut, r); 
+                found = edb_.get((const uint8_t*) ut.c_str(), ut.size(), r);
                 
                 if (found) {
 
@@ -151,13 +149,12 @@ std::list<index_type> DiscotServer::search(const SearchRequest& req)
                 logger::log(logger::DBG) << i << ", " << j << std::endl;
                 j++;
             } while(found);
-
-            st = public_tdp_.eval(st); 
+            st = crypto::Hash::hash(st); 
         }
     }
     
 /*
-std::list<index_type> DiscotServer::search_parallel_full(const SearchRequest& req) // TODO: rewriting
+std::list<index_type> DiscohServer::search_parallel_full(const SearchRequest& req) //
 {
     std::list<index_type> results;
     
@@ -255,7 +252,7 @@ std::list<index_type> DiscotServer::search_parallel_full(const SearchRequest& re
 }
 
 
-std::list<index_type> DiscotServer::search_parallel(const SearchRequest& req, uint8_t access_threads)
+std::list<index_type> DiscohServer::search_parallel(const SearchRequest& req, uint8_t access_threads)
 {
     std::list<index_type> results;
     std::mutex res_mutex;
@@ -344,7 +341,7 @@ std::list<index_type> DiscotServer::search_parallel(const SearchRequest& req, ui
     return results;
 }
 
-std::list<index_type> DiscotServer::search_parallel_light(const SearchRequest& req, uint8_t thread_count)
+std::list<index_type> DiscohServer::search_parallel_light(const SearchRequest& req, uint8_t thread_count)
 {
     search_token_type st = req.token;
     std::list<index_type> results;
@@ -430,7 +427,7 @@ std::list<index_type> DiscotServer::search_parallel_light(const SearchRequest& r
     return results;
 }
 
-void DiscotServer::search_parallel_callback(const SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t rsa_thread_count, uint8_t access_thread_count, uint8_t post_thread_count)
+void DiscohServer::search_parallel_callback(const SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t rsa_thread_count, uint8_t access_thread_count, uint8_t post_thread_count)
 {
     search_token_type st = req.token;
     
@@ -513,7 +510,7 @@ void DiscotServer::search_parallel_callback(const SearchRequest& req, std::funct
     post_pool.join();
 }
 
-void DiscotServer::search_parallel_light_callback(const SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t thread_count)
+void DiscohServer::search_parallel_light_callback(const SearchRequest& req, std::function<void(index_type)> post_callback, uint8_t thread_count)
 {
     search_token_type st = req.token;
     
@@ -589,17 +586,17 @@ void DiscotServer::search_parallel_light_callback(const SearchRequest& req, std:
     }
 }
 */
-void DiscotServer::update(const UpdateRequest& req)
+void DiscohServer::update(const UpdateRequest& req)
 {
     if (logger::severity() <= logger::DBG) {
         logger::log(logger::DBG) << "Update: (" << hex_string(req.token) << ", " << std::hex << req.index << ")" << std::endl;
     }
 
 //    edb_.add(req.token, req.index);
-    edb_.put(req.token, req.index);
+    edb_.put(req.token, std::to_string(req.index));
 }
 
-std::ostream& DiscotServer::print_stats(std::ostream& out) const
+std::ostream& DiscohServer::print_stats(std::ostream& out) const
 {
 //    out << "Number of tokens: " << edb_.size();
 //    out << "; Load: " << edb_.load();

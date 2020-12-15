@@ -82,17 +82,17 @@ std::list<index_type> FastServer::search(const SearchRequest& req)
 
         bool found = edb_.get(ut, r);
         
-        if (found) {
-            if (logger::severity() <= logger::DBG) {
-                logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
-            }
-            
+        if (found) {          
             r = xor_mask(r, mask);
-
+            if (logger::severity() <= logger::DBG) {
+                logger::log(logger::DBG) << "Found: " << hex_string(r) << std::endl;
+            }
             index_type index = r.substr(0, 8); // r[0...7]
 
             results.push_back( (index) );
-            
+            if (logger::severity() <= logger::DBG) {
+                logger::log(logger::DBG) << "index: " << hex_string(index)  << std::endl;
+            }
             st = r.substr(8, 16);       // r[8...24]
             // logger::log(logger::INFO) << "ST: " << hex_string(st) << std::endl; 
         }else{
@@ -130,19 +130,20 @@ std::list<index_type> FastServer::search(const SearchRequest& req)
             
             bool found = edb_.get(ut,r);
             
-            if (found) {
-                if (logger::severity() <= logger::DBG) {
-                    logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl;
-                }
-                
+            if (found) {              
                 // parse r to get index and random_key
                 r = xor_mask(r, mask);
-
+                if (logger::severity() <= logger::DBG) {
+                    logger::log(logger::DBG) << "Found: " << hex_string(r)  << std::endl;
+                }
+                
                 index_type index = r.substr(0, 8); // r[0...7]
 
                 results.push_back(index);
                 post_callback( (index) );
-
+                if (logger::severity() <= logger::DBG) {
+                    logger::log(logger::DBG) << "index: " << hex_string(index)  << std::endl;
+                }
                 // logger::log(logger::INFO) << "1-st: " << hex_string(r) << std::endl;
 
                 st = r.substr(8, 16);       // r[8...r.size()] is previous state info  

@@ -19,7 +19,7 @@
 //
 
 
-#include "discot_server_runner.hpp"
+#include "discoh_server_runner.hpp"
 
 #include "utils/utils.hpp"
 #include "utils/logger.hpp"
@@ -36,21 +36,21 @@
 
 
 namespace sse {
-    namespace discot {
+    namespace discoh {
 
-        const std::string DiscotImpl::pk_file = "tdp_pk.key";
-        const std::string DiscotImpl::pairs_map_file = "pairs.dat";
+        const std::string DiscohImpl::para_file = "parameter.dat";
+        const std::string DiscohImpl::pairs_map_file = "pairs.dat";
 
-DiscotImpl::DiscotImpl(const std::string& path) :
+DiscohImpl::DiscohImpl(const std::string& path) :
 storage_path_(path), async_search_(true)
 {
     if (is_directory(storage_path_)) {
         // try to initialize everything from this directory
         
-        std::string pk_path     = storage_path_ + "/" + pk_file;
+        std::string para_path     = storage_path_ + "/" + para_file;
         std::string pairs_map_path  = storage_path_ + "/" + pairs_map_file;
 
-        if (!is_file(pk_path)) {
+        if (!is_file(para_path)) {
             // error, the secret key file is not there
             throw std::runtime_error("Missing secret key file");
         }
@@ -59,12 +59,13 @@ storage_path_(path), async_search_(true)
             throw std::runtime_error("Missing data");
         }
         
-        std::ifstream pk_in(pk_path.c_str());
-        std::stringstream pk_buf;
+        std::ifstream para_in(para_path.c_str());
+        std::stringstream para_buf;
         
-        pk_buf << pk_in.rdbuf();
-
-        server_.reset(new DiscotServer(pairs_map_path, pk_buf.str()));
+        para_buf << para_in.rdbuf();
+        uint32_t hashchain_size = std::stoi(para_buf.str());
+        
+        server_.reset(new DiscohServer(pairs_map_path, hashchain_size));
     }else if (exists(storage_path_)){
         // there should be nothing else than a directory at path, but we found something  ...
         throw std::runtime_error(storage_path_ + ": not a directory");
@@ -73,8 +74,8 @@ storage_path_(path), async_search_(true)
     }
 }
 
-grpc::Status DiscotImpl::setup(grpc::ServerContext* context,
-                    const discot::SetupMessage* message,
+grpc::Status DiscohImpl::setup(grpc::ServerContext* context,
+                    const discoh::SetupMessage* message,
                     google::protobuf::Empty* e)
 {
     
@@ -109,7 +110,7 @@ grpc::Status DiscotImpl::setup(grpc::ServerContext* context,
 
     try {
         logger::log(logger::INFO) << "Seting up with size " << message->setup_size() << std::endl;
-        server_.reset(new DiscotServer(pairs_map_path, message->setup_size(), message->public_key()));
+        server_.reset(new DiscohServer(pairs_map_path, message->setup_size(), message->hashchain_size()));
     } catch (std::exception &e) {
         logger::log(logger::ERROR) << "Error when setting up the server's core" << std::endl;
         
@@ -117,19 +118,19 @@ grpc::Status DiscotImpl::setup(grpc::ServerContext* context,
         return grpc::Status(grpc::FAILED_PRECONDITION, "Unable to create the server's core.");
     }
 
-    // write the public key in a file
-    std::string pk_path     = storage_path_ + "/" + pk_file;
+    // write the parameter in a file
+    std::string para_path     = storage_path_ + "/" + para_file;
 
-    std::ofstream pk_out(pk_path.c_str());
-    if (!pk_out.is_open()) {
+    std::ofstream para_out(para_path.c_str());
+    if (!para_out.is_open()) {
         // error
         
         logger::log(logger::ERROR) << "Error when writing the public key" << std::endl;
 
         return grpc::Status(grpc::PERMISSION_DENIED, "Unable to write the public key to disk");
     }
-    pk_out << message->public_key();
-    pk_out.close();
+    para_out << message->hashchain_size();
+    para_out.close();
 
     logger::log(logger::TRACE) << "Successful setup" << std::endl;
 
@@ -167,9 +168,9 @@ std::to_string((t)) )
 
 
 
-grpc::Status DiscotImpl::search(grpc::ServerContext* context,
-                                const discot::SearchRequestMessage* mes,
-                                grpc::ServerWriter<discot::SearchReply>* writer)
+grpc::Status DiscohImpl::search(grpc::ServerContext* context,
+                                const discoh::SearchRequestMessage* mes,
+                                grpc::ServerWriter<discoh::SearchReply>* writer)
 {
     if(async_search_){
         return async_search(context, mes, writer);
@@ -178,9 +179,9 @@ grpc::Status DiscotImpl::search(grpc::ServerContext* context,
     }
 }
 
-grpc::Status DiscotImpl::sync_search(grpc::ServerContext* context,
-                                     const discot::SearchRequestMessage* mes,
-                                     grpc::ServerWriter<discot::SearchReply>* writer)
+grpc::Status DiscohImpl::sync_search(grpc::ServerContext* context,
+                                     const discoh::SearchRequestMessage* mes,
+                                     grpc::ServerWriter<discoh::SearchReply>* writer)
 {
     if (!server_) {
         // problem, the server is already set up
@@ -198,7 +199,7 @@ grpc::Status DiscotImpl::sync_search(grpc::ServerContext* context,
 //    BENCHMARK_SIMPLE("\n\n",{;})
     
     for (auto& i : res_list) {
-        discot::SearchReply reply;
+        discoh::SearchReply reply;
         reply.set_result((uint64_t) i);
         
         writer->Write(reply);
@@ -211,9 +212,9 @@ grpc::Status DiscotImpl::sync_search(grpc::ServerContext* context,
 }
 
 
-grpc::Status DiscotImpl::async_search(grpc::ServerContext* context,
-                                      const discot::SearchRequestMessage* mes,
-                                      grpc::ServerWriter<discot::SearchReply>* writer)
+grpc::Status DiscohImpl::async_search(grpc::ServerContext* context,
+                                      const discoh::SearchRequestMessage* mes,
+                                      grpc::ServerWriter<discoh::SearchReply>* writer)
 {
     if (!server_) {
         // problem, the server is already set up
@@ -228,7 +229,7 @@ grpc::Status DiscotImpl::async_search(grpc::ServerContext* context,
     
     auto post_callback = [&writer, &res_size, &writer_lock](index_type i)
     {
-        discot::SearchReply reply;
+        discoh::SearchReply reply;
         reply.set_result((uint64_t) i);
         
         writer_lock.lock();
@@ -256,8 +257,8 @@ grpc::Status DiscotImpl::async_search(grpc::ServerContext* context,
 }
         
 
-grpc::Status DiscotImpl::update(grpc::ServerContext* context,
-                    const discot::UpdateRequestMessage* mes,
+grpc::Status DiscohImpl::update(grpc::ServerContext* context,
+                    const discoh::UpdateRequestMessage* mes,
                     google::protobuf::Empty* e)
 {
     std::unique_lock<std::mutex> lock(update_mtx_);
@@ -276,8 +277,8 @@ grpc::Status DiscotImpl::update(grpc::ServerContext* context,
     return grpc::Status::OK;
 }
 
-        grpc::Status DiscotImpl::bulk_update(grpc::ServerContext* context,
-                                        grpc::ServerReader<discot::UpdateRequestMessage>* reader, google::protobuf::Empty* e)
+        grpc::Status DiscohImpl::bulk_update(grpc::ServerContext* context,
+                                        grpc::ServerReader<discoh::UpdateRequestMessage>* reader, google::protobuf::Empty* e)
         {
             if (!server_) {
                 // problem, the server is already set up
@@ -286,7 +287,7 @@ grpc::Status DiscotImpl::update(grpc::ServerContext* context,
             
             logger::log(logger::TRACE) << "Updating (bulk)..." << std::endl;
 
-            discot::UpdateRequestMessage mes;
+            discoh::UpdateRequestMessage mes;
             
             while (reader->Read(&mes)) {
                 server_->update(message_to_request(&mes));
@@ -299,7 +300,7 @@ grpc::Status DiscotImpl::update(grpc::ServerContext* context,
         }
         
 /*
-std::ostream& DiscotImpl::print_stats(std::ostream& out) const
+std::ostream& DiscohImpl::print_stats(std::ostream& out) const
 {
     if (server_) {
         return server_->print_stats(out);
@@ -308,12 +309,12 @@ std::ostream& DiscotImpl::print_stats(std::ostream& out) const
 }
 */
 
-bool DiscotImpl::search_asynchronously() const
+bool DiscohImpl::search_asynchronously() const
 {
     return async_search_;
 }
 
-void DiscotImpl::set_search_asynchronously(bool flag)
+void DiscohImpl::set_search_asynchronously(bool flag)
 {
     async_search_ = flag;
 }
@@ -324,7 +325,8 @@ SearchRequest message_to_request(const SearchRequestMessage* mes)
     
     req.add_count = mes->add_count();
     req.derivation_key = mes->derivation_key();
-    std::copy(mes->search_token().begin(), mes->search_token().end(), req.token.begin());
+    req.token = mes->search_token();
+    //std::copy(mes->search_token().begin(), mes->search_token().end(), req.token.begin());
 
     return req;
 }
@@ -334,14 +336,15 @@ UpdateRequest message_to_request(const UpdateRequestMessage* mes)
     UpdateRequest req;
     
     req.index = mes->index();
-    std::copy(mes->update_token().begin(), mes->update_token().end(), req.token.begin());
+    req.token = mes->update_token();
+    //std::copy(mes->update_token().begin(), mes->update_token().end(), req.token.begin());
 
     return req;
 }
        
-void run_discot_server(const std::string &address, const std::string& server_db_path, grpc::Server **server_ptr, bool async_search) {
+void run_discoh_server(const std::string &address, const std::string& server_db_path, grpc::Server **server_ptr, bool async_search) {
     std::string server_address(address);
-    DiscotImpl service(server_db_path);
+    DiscohImpl service(server_db_path);
     
     grpc::ServerBuilder builder;
     builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());

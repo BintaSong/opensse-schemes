@@ -6,10 +6,10 @@
 //  Copyright © 2016 Raphael Bost. All rights reserved.
 //
 
-// updated by Xiangfu Song for discot, a hybird index based SSE
+// updated by Xiangfu Song for discoh, a hybird index based SSE
 
 
-#include "discot/discot_server_runner.hpp"
+#include "discoh/discoh_server_runner.hpp"
 #include "src/utils/logger.hpp"
 
 #include <sse/crypto/utils.hpp>
@@ -33,7 +33,7 @@ void exit_handler(int signal)
 int main(int argc, char** argv) {
 
     sse::logger::set_severity(sse::logger::DBG);
-    sse::logger::set_benchmark_file("benchmark_discot_server.out");
+    sse::logger::set_benchmark_file("benchmark_discoh_server.out");
 
     std::signal(SIGTERM, exit_handler);
     std::signal(SIGINT, exit_handler);
@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
         sse::logger::log(sse::logger::INFO) << "Running client with database " << server_db << std::endl;
     }
 
-    sse::discot::run_discot_server("0.0.0.0:4240", server_db, &server_ptr__, async_search);
+    sse::discoh::run_discoh_server("0.0.0.0:4240", server_db, &server_ptr__, async_search);
     
     sse::crypto::cleanup_crypto_lib();
 

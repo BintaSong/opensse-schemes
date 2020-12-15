@@ -18,13 +18,13 @@
 // along with Sophos.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-// updated by Xiangfu Song, discot is adapted from Sophos
+// updated by Xiangfu Song, discoh is adapted from Sophos
 
-#include "discot_client_runner.hpp"
+#include "discoh_client_runner.hpp"
 
 #include "sophos_net_types.hpp" // net types are same as sophos
-#include "discot_client.hpp"
-#include "discot_server.hpp"
+#include "discoh_client.hpp"
+#include "discoh_server.hpp"
 
 #include "utils/thread_pool.hpp"
 #include "utils/utils.hpp"
@@ -46,20 +46,20 @@
 #include <grpc++/security/credentials.h>
 
 namespace sse {
-namespace discot {
+namespace discoh {
 
 
-DiscotClientRunner::DiscotClientRunner(const std::string& address, const std::string& path, size_t setup_size, uint32_t n_keywords)
+DiscohClientRunner::DiscohClientRunner(const std::string& address, const std::string& path, size_t setup_size, uint32_t n_keywords)
     : bulk_update_state_{0}, update_launched_count_(0), update_completed_count_(0)
 {
     std::shared_ptr<grpc::Channel> channel(grpc::CreateChannel(address,
                                                                grpc::InsecureChannelCredentials()));
-    stub_ = discot::Discot::NewStub(channel);
+    stub_ = discoh::Discoh::NewStub(channel);
                     
     if (is_directory(path)) {
         // try to initialize everything from this directory
 
-        client_ = DiscotClient::construct_from_directory(path);
+        client_ = DiscohClient::construct_from_directory(path);
         
     }else if (exists(path)){
         // there should be nothing else than a directory at path, but we found something  ...
@@ -72,7 +72,7 @@ DiscotClientRunner::DiscotClientRunner(const std::string& address, const std::st
             throw std::runtime_error(path + ": unable to create directory");
         }
         
-        client_ = DiscotClient::init_in_directory(path,n_keywords);
+        client_ = DiscohClient::init_in_directory(path,n_keywords);
         
         // send a setup message to the server
         bool success = send_setup(setup_size);
@@ -83,25 +83,25 @@ DiscotClientRunner::DiscotClientRunner(const std::string& address, const std::st
     }
     
     // start the thread that will look for completed updates
-    update_completion_thread_ = new std::thread(&DiscotClientRunner::update_completion_loop, this);
+    update_completion_thread_ = new std::thread(&DiscohClientRunner::update_completion_loop, this);
 }
 
 
-DiscotClientRunner::~DiscotClientRunner()
+DiscohClientRunner::~DiscohClientRunner()
 {
     update_cq_.Shutdown();
     wait_updates_completion();
     update_completion_thread_->join();
 }
     
-bool DiscotClientRunner::send_setup(const size_t setup_size) const
+bool DiscohClientRunner::send_setup(const size_t setup_size) const
 {
     grpc::ClientContext context;
-    discot::SetupMessage message;
+    discoh::SetupMessage message;
     google::protobuf::Empty e;
 
     message.set_setup_size(setup_size);
-    message.set_public_key(client_->public_key());
+    message.set_hashchain_size(client_->hashchain_size());
     
     grpc::Status status = stub_->setup(&context, message, &e);
 
@@ -117,7 +117,7 @@ bool DiscotClientRunner::send_setup(const size_t setup_size) const
 }
     
     
-const DiscotClient& DiscotClientRunner::client() const
+const DiscohClient& DiscohClientRunner::client() const
 {
     if (!client_) {
         throw std::logic_error("Invalid state");
@@ -125,17 +125,17 @@ const DiscotClient& DiscotClientRunner::client() const
     return *client_;
 }
     
-std::list<uint64_t> DiscotClientRunner::search(const std::string& keyword, std::function<void(uint64_t)> receive_callback) const
+std::list<uint64_t> DiscohClientRunner::search(const std::string& keyword, std::function<void(uint64_t)> receive_callback) const
 {
     logger::log(logger::TRACE) << "Search " << keyword << std::endl;
     
     grpc::ClientContext context;
-    discot::SearchRequestMessage message;
-    discot::SearchReply reply;
+    discoh::SearchRequestMessage message;
+    discoh::SearchReply reply;
     
     message = request_to_message(client_->search_request(keyword));
     
-    std::unique_ptr<grpc::ClientReader<discot::SearchReply> > reader( stub_->search(&context, message) );
+    std::unique_ptr<grpc::ClientReader<discoh::SearchReply> > reader( stub_->search(&context, message) );
     std::list<uint64_t> results;
     
     
@@ -159,10 +159,10 @@ std::list<uint64_t> DiscotClientRunner::search(const std::string& keyword, std::
     return results;
 }
 
-void DiscotClientRunner::update(const std::string& keyword, uint64_t index)
+void DiscohClientRunner::update(const std::string& keyword, uint64_t index)
 {
     grpc::ClientContext context;
-    discot::UpdateRequestMessage message;
+    discoh::UpdateRequestMessage message;
     google::protobuf::Empty e;
     
 
@@ -182,10 +182,10 @@ void DiscotClientRunner::update(const std::string& keyword, uint64_t index)
     }
 }
 
-    void DiscotClientRunner::async_update(const std::string& keyword, uint64_t index)
+    void DiscohClientRunner::async_update(const std::string& keyword, uint64_t index)
     {
         grpc::ClientContext context;
-        discot::UpdateRequestMessage message;
+        discoh::UpdateRequestMessage message;
 
         
 
@@ -208,14 +208,14 @@ void DiscotClientRunner::update(const std::string& keyword, uint64_t index)
         }
     }
 
-    void DiscotClientRunner::prepare_new_batch()
+    void DiscohClientRunner::prepare_new_batch()
     {
         client_->increase_global_counter();
     }
         
-    void DiscotClientRunner::update_in_session(const std::string& keyword, uint64_t index)
+    void DiscohClientRunner::update_in_session(const std::string& keyword, uint64_t index)
     {
-        discot::UpdateRequestMessage message = request_to_message(client_->update_request(keyword, index));
+        discoh::UpdateRequestMessage message = request_to_message(client_->update_request(keyword, index));
 
         if(! bulk_update_state_.is_up)
         {
@@ -230,14 +230,14 @@ void DiscotClientRunner::update(const std::string& keyword, uint64_t index)
         bulk_update_state_.mtx.unlock();
     }
 
-    void DiscotClientRunner::wait_updates_completion()
+    void DiscohClientRunner::wait_updates_completion()
     {
         stop_update_completion_thread_ = true;
         std::unique_lock<std::mutex> lock(update_completion_mtx_);
         update_completion_cv_.wait(lock, [this]{ return update_launched_count_ == update_completed_count_; });
     }
         
-    void DiscotClientRunner::start_update_session()
+    void DiscohClientRunner::start_update_session()
     {
         if (bulk_update_state_.writer) {
             logger::log(logger::WARNING) << "Invalid client state: the bulk update session is already up" << std::endl;
@@ -251,7 +251,7 @@ void DiscotClientRunner::update(const std::string& keyword, uint64_t index)
         logger::log(logger::TRACE) << "Update session started." << std::endl;
     }
 
-    void DiscotClientRunner::end_update_session()
+    void DiscohClientRunner::end_update_session()
     {
         if (!bulk_update_state_.writer) {
             logger::log(logger::WARNING) << "Invalid client state: the bulk update session is not up" << std::endl;
@@ -273,7 +273,7 @@ void DiscotClientRunner::update(const std::string& keyword, uint64_t index)
     }
 
         
-    void DiscotClientRunner::update_completion_loop()
+    void DiscohClientRunner::update_completion_loop()
     {
         sophos::update_tag_type* tag;
         bool ok = false;
@@ -300,7 +300,7 @@ void DiscotClientRunner::update(const std::string& keyword, uint64_t index)
         }
     }
         
-    bool DiscotClientRunner::load_inverted_index(const std::string& path)
+    bool DiscohClientRunner::load_inverted_index(const std::string& path)
     {
         try {
             
@@ -349,7 +349,7 @@ void DiscotClientRunner::update(const std::string& keyword, uint64_t index)
     }
 
     /*
-    std::ostream& DiscotClientRunner::print_stats(std::ostream& out) const
+    std::ostream& DiscohClientRunner::print_stats(std::ostream& out) const
     {
         return client_->print_stats(out);
     }
@@ -360,7 +360,7 @@ void DiscotClientRunner::update(const std::string& keyword, uint64_t index)
         
         mes.set_add_count(req.add_count);
         mes.set_derivation_key(req.derivation_key);
-        mes.set_search_token(req.token.data(), req.token.size());
+        mes.set_search_token(req.token);
         
         return mes;
     }
@@ -369,11 +369,12 @@ void DiscotClientRunner::update(const std::string& keyword, uint64_t index)
     {
         UpdateRequestMessage mes;
         
-        mes.set_update_token(req.token.data(), req.token.size());
+        mes.set_update_token(req.token);
+        // logger::log(logger::DBG) << "mes.token: " << hex_string(mes.update_token()) << std::endl;
         mes.set_index(req.index);
         
         return mes;
     }
     
-} // namespace discot
+} // namespace discoh
 } // namespace sse
