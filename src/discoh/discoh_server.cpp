@@ -139,7 +139,7 @@ std::list<index_type> DiscohServer::search(const SearchRequest& req)
                 if (found) {
 
                     if (logger::severity() <= logger::DBG) {
-                        logger::log(logger::DBG) << "Found: " << (r) << std::endl; 
+                        logger::log(logger::DBG) << "Found: " << hex_string(r) << std::endl; 
                     }
 
                     r = xor_mask(r, mask); 
@@ -149,7 +149,7 @@ std::list<index_type> DiscohServer::search(const SearchRequest& req)
                     }
                     post_callback(r); 
                     if (logger::severity() <= logger::DBG) { 
-                        logger::log(logger::DBG) << "result index: " << (r) << std::endl; 
+                        logger::log(logger::DBG) << "result index: " << hex_string(r) << std::endl; 
                     }
                 } else {
                     if (logger::severity() <= logger::DBG) { 

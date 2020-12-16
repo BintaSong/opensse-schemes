@@ -89,8 +89,12 @@ void test_client_server()
         client_kw_token_master_key_out.close();
 
 
-        u_req = client->update_request("toto", 0);
-        server->update(u_req);
+        
+        for (uint32_t ind = 0; ind < 10; ind++)
+        {
+            u_req = client->update_request("toto", ind);
+            server->update(u_req);
+        }
         
 //        u_req = client->update_request("titi", 0);
 //        server->update(u_req);

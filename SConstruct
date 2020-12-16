@@ -100,7 +100,7 @@ objects = SConscript('src/build.scons', exports='env', variant_dir='build')
 # protos = SConscript('src/protos/build.scons', exports='env', duplicate=0)
 # Depends(objects, protos)
 
-#env.Depends(objects["diana"],[crypto_lib_target, db_parser_target])
+env.Depends(objects["diana"],[crypto_lib_target, db_parser_target])
 env.Depends(objects["sophos"],[crypto_lib_target , db_parser_target])
 #env.Depends(objects["janus"],[crypto_lib_target, db_parser_target])
 env.Depends(objects["fast"],[crypto_lib_target , db_parser_target])
@@ -112,7 +112,7 @@ env.Depends(objects["discog"],[crypto_lib_target , db_parser_target])
 # env.Alias('clean_deps', [clean_crypto])
 
 #Clean(objects["sophos"] + objects["diana"] + objects["janus"] + objects["fast"] + objects["fastio"], 'build')
-Clean(objects["fast"] + objects["sophos"]+ objects["discot"] + objects["discog"], 'build')
+Clean(objects["fast"] + objects["sophos"]+ objects["discot"] + objects["discog"] + objects["diana"], 'build')
 #Clean(objects["discot"] + objects["discog"], 'build')
 
 outter_env = env.Clone()
@@ -123,9 +123,9 @@ sophos_debug_prog   = outter_env.Program('sophos_debug',    ['test_sophos.cpp'] 
 sophos_client       = outter_env.Program('sophos_client',   ['sophos_client.cpp']   + objects["sophos"])
 sophos_server       = outter_env.Program('sophos_server',   ['sophos_server.cpp']   + objects["sophos"])
 
-#diana_debug_prog    = outter_env.Program('diana_debug',     ['test_diana.cpp']      + objects["diana"])
-#diana_client        = outter_env.Program('diana_client',    ['diana_client.cpp']    + objects["diana"])
-#diana_server        = outter_env.Program('diana_server',    ['diana_server.cpp']    + objects["diana"])
+diana_debug_prog    = outter_env.Program('diana_debug',     ['test_diana.cpp']      + objects["diana"])
+diana_client        = outter_env.Program('diana_client',    ['diana_client.cpp']    + objects["diana"])
+diana_server        = outter_env.Program('diana_server',    ['diana_server.cpp']    + objects["diana"])
 
 #janus_debug_prog    = outter_env.Program('janus_debug',     ['test_janus.cpp']      + objects["janus"])
 
@@ -149,7 +149,7 @@ discog_client       = outter_env.Program('discog_client',   ['discog_client.cpp'
 discog_server       = outter_env.Program('discog_server',   ['discog_server.cpp']   + objects["discog"])
 
 env.Alias('sophos', [sophos_debug_prog, sophos_client, sophos_server])
-#env.Alias('diana', [diana_debug_prog, diana_client, diana_server])
+env.Alias('diana', [diana_debug_prog, diana_client, diana_server])
 #env.Alias('janus', [janus_debug_prog])
 env.Alias('fast', [fast_debug_prog, fast_client, fast_server])
 #env.Alias('fastio', [fastio_client, fastio_server])
@@ -158,5 +158,5 @@ env.Alias('discoh', [discoh_client, discoh_server])
 env.Alias('discog', [discog_debug_prog, discog_client, discog_server])
 
 #env.Default(['sophos','diana','janus', 'fast', 'fastio'])
-env.Default(['fast', 'sophos', 'discot','discoh', 'discog'])
+env.Default(['fast', 'sophos', 'discot', 'discoh', 'diana', 'discog'])
 #env.Default(['discot', 'discog'])

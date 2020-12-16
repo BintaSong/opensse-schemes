@@ -242,10 +242,10 @@ namespace sse {
                 TokenTree::token_type root = root_prf_.prf(kw_index.data(), kw_index.size());
                 
                 req.token_list = TokenTree::covering_list(root, req.add_count, kTreeDepth);
-                
-                
+        
                 // set the kw_token
                 req.kw_token = kw_token_prf_.prf(kw_index);
+
             //}
             
             return req;
@@ -277,10 +277,11 @@ namespace sse {
             st = TokenTree::derive_node(root, global_counter, kTreeDepth);
             
             //if (logger::severity() <= logger::DBG) {
-            logger::log(logger::DBG) << "[CLIENT] New ST: " << hex_string(st) << " for global counter: "<< global_counter << std::endl;
+            //logger::log(logger::DBG) << "[CLIENT] New ST: " << hex_string(st) << " for global counter: "<< global_counter << std::endl;
             //}
             
             // we use st to derive a new local_st for level-2 index
+            // FIXME: **MUST** PAY ATTENTION TO THE PRF KEY SIZE !
             crypto::Prf<TokenTree::kTokenSize> local_prf(st.data(), st.size()); //kSearchTokenKeySize = 16
             logger::log(logger::DBG) << "[CLIENT] local_prf key data: " << hex_string(std::string((const char*)local_prf.key_data(), TokenTree::kTokenSize)) << std::endl;
 
@@ -300,7 +301,7 @@ namespace sse {
             req.index = xor_mask(index, mask);
             
             if (logger::severity() <= logger::DBG) {
-                // logger::log(logger::DBG) << "[CLIENT] Update Request: (" << hex_string(req.token) << ", " << std::hex << req.index << ")" << std::endl;
+                logger::log(logger::DBG) << "[CLIENT] Update Request: (" << hex_string(req.token) << ", " << std::hex << req.index << ")" << std::endl;
             }
             
             return req;
@@ -334,17 +335,14 @@ namespace sse {
                 TokenTree::token_type root = root_prf_.prf(kw_index.data(), kw_index.size());
                 
                 st = TokenTree::derive_node(root, global_counter, kTreeDepth);
-                
-                if (logger::severity() <= logger::DBG) {
-                    logger::log(logger::DBG) << "[CLIENT] New ST: " << hex_string(st)  << " for global counter: "<< global_counter << std::endl;
-                }
-                
+        
                 // retrieve the local counter
                 uint32_t local_counter;
                 get_and_increase_local_counter(keyword, local_counter);
                 
                 // we use `st` to derive a new `local_st` for level-2 index update
-                auto local_prf = crypto::Prf<TokenTree::kTokenSize>(st.data()); // TokenTree::kTokenSize == 16
+                // FIXME: **MUST** PAY ATTENTION TO THE PRF KEY SIZE ! (crypto::Prf<TokenTree::kTokenSize>(const void* k) will read more data than st.size()!)
+                auto local_prf = crypto::Prf<TokenTree::kTokenSize>(st.data(), st.size()); // TokenTree::kTokenSize == 16
                 search_token_key_type local_st = local_prf.prf(std::to_string(local_counter)); // kSearchTokenKeySize == crypto::Prg::kKeySize
                 
                 gen_update_token_mask(local_st, req.token, mask);
