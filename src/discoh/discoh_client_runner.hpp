@@ -43,18 +43,18 @@ public:
     
     const DiscohClient& client() const;
     
-    std::list<uint64_t> search(const std::string& keyword, std::function<void(uint64_t)> receive_callback = NULL) const; 
-    void update(const std::string& keyword, uint64_t index); 
-    void async_update(const std::string& keyword, uint64_t index); 
+    std::list<index_type> search(const std::string& keyword, std::function<void(index_type)> receive_callback = NULL) const; 
+    void update(const std::string& keyword, const index_type& index); 
+    void async_update(const std::string& keyword, const index_type& index); 
     void prepare_new_batch();
 
     void start_update_session();
     void end_update_session();
-    void update_in_session(const std::string& keyword, uint64_t index);
+    void update_in_session(const std::string& keyword, const index_type& index);
 
     void wait_updates_completion();
     
-    bool load_inverted_index(const std::string& path);
+    // bool load_inverted_index(const std::string& path);
 
     // std::ostream& print_stats(std::ostream& out) const;
 

@@ -40,7 +40,7 @@ namespace sse {
         class DiscohClient {
         public:
             static constexpr size_t kKeywordIndexSize = 16;            
-            static constexpr size_t HashChainSize = 2048;
+            static constexpr size_t HashChainSize = 100;
             
             static std::unique_ptr<DiscohClient> construct_from_directory(const std::string& dir_path);
             static std::unique_ptr<DiscohClient> init_in_directory(const std::string& dir_path, uint32_t n_keywords);

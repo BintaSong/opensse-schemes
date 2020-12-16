@@ -125,7 +125,7 @@ const DiscohClient& DiscohClientRunner::client() const
     return *client_;
 }
     
-std::list<uint64_t> DiscohClientRunner::search(const std::string& keyword, std::function<void(uint64_t)> receive_callback) const
+std::list<index_type> DiscohClientRunner::search(const std::string& keyword, std::function<void(index_type)> receive_callback) const
 {
     logger::log(logger::TRACE) << "Search " << keyword << std::endl;
     
@@ -136,7 +136,7 @@ std::list<uint64_t> DiscohClientRunner::search(const std::string& keyword, std::
     message = request_to_message(client_->search_request(keyword));
     
     std::unique_ptr<grpc::ClientReader<discoh::SearchReply> > reader( stub_->search(&context, message) );
-    std::list<uint64_t> results;
+    std::list<std::string> results;
     
     
     while (reader->Read(&reply)) {
@@ -159,7 +159,7 @@ std::list<uint64_t> DiscohClientRunner::search(const std::string& keyword, std::
     return results;
 }
 
-void DiscohClientRunner::update(const std::string& keyword, uint64_t index)
+void DiscohClientRunner::update(const std::string& keyword, const index_type& index)
 {
     grpc::ClientContext context;
     discoh::UpdateRequestMessage message;
@@ -182,7 +182,7 @@ void DiscohClientRunner::update(const std::string& keyword, uint64_t index)
     }
 }
 
-    void DiscohClientRunner::async_update(const std::string& keyword, uint64_t index)
+    void DiscohClientRunner::async_update(const std::string& keyword, const index_type& index)
     {
         grpc::ClientContext context;
         discoh::UpdateRequestMessage message;
@@ -213,7 +213,7 @@ void DiscohClientRunner::update(const std::string& keyword, uint64_t index)
         client_->increase_global_counter();
     }
         
-    void DiscohClientRunner::update_in_session(const std::string& keyword, uint64_t index)
+    void DiscohClientRunner::update_in_session(const std::string& keyword, const index_type& index)
     {
         discoh::UpdateRequestMessage message = request_to_message(client_->update_request(keyword, index));
 
@@ -299,7 +299,8 @@ void DiscohClientRunner::update(const std::string& keyword, uint64_t index)
             }
         }
     }
-        
+
+/*        
     bool DiscohClientRunner::load_inverted_index(const std::string& path)
     {
         try {
@@ -347,8 +348,6 @@ void DiscohClientRunner::update(const std::string& keyword, uint64_t index)
         }
         return false;
     }
-
-    /*
     std::ostream& DiscohClientRunner::print_stats(std::ostream& out) const
     {
         return client_->print_stats(out);

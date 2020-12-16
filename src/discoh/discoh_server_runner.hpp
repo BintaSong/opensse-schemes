@@ -38,7 +38,8 @@ namespace discoh {
     class DiscohImpl final : public discoh::Discoh::Service {
     public:
         explicit DiscohImpl(const std::string& path);
-        
+        ~DiscohImpl();
+
         grpc::Status setup(grpc::ServerContext* context,
                            const discoh::SetupMessage* request,
                            google::protobuf::Empty* e) override;
@@ -68,6 +69,7 @@ namespace discoh {
         bool search_asynchronously() const;
         void set_search_asynchronously(bool flag);
         
+        void flush_server_storage();
         
     private:
         static const std::string para_file;

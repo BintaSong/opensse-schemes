@@ -34,11 +34,11 @@ message SearchRequestMessage
 
 message SearchReply
 {
-    uint64 result = 1;
+    bytes result = 1;
 }
 
 message UpdateRequestMessage
 {
     bytes update_token = 1;
-    uint64 index = 2;
+    bytes index = 2;
 }

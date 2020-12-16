@@ -109,11 +109,11 @@ int main(int argc, char** argv) {
         client_runner->prepare_new_batch(); 
     }
 
-    for (std::string &path : input_files) {
-        sse::logger::log(sse::logger::INFO) << "Load file " << path << std::endl;
-        client_runner->load_inverted_index(path);
-        sse::logger::log(sse::logger::INFO) << "Done loading file " << path << std::endl;
-    }
+    //for (std::string &path : input_files) {
+        //sse::logger::log(sse::logger::INFO) << "Load file " << path << std::endl;
+        // client_runner->load_inverted_index(path);
+        //sse::logger::log(sse::logger::INFO) << "Done loading file " << path << std::endl;
+    //}
     
     if (rnd_entries_count > 0) {
         sse::logger::log(sse::logger::INFO) << "Randomly generating database with " << rnd_entries_count << " docs" << std::endl;
@@ -122,7 +122,8 @@ int main(int argc, char** argv) {
 
         auto gen_callback = [&client_runner](const std::string &s, size_t i)
         {
-            client_runner->async_update(s, i);
+            std::string index( reinterpret_cast<const char*>(&i), sse::discoh::kIndexSize );
+            client_runner->async_update(s, index);
         };
         
         client_runner->start_update_session();
@@ -137,7 +138,7 @@ int main(int argc, char** argv) {
         std::ostream& log_stream = sse::logger::log(sse::logger::INFO);
         bool first = true;
         
-        auto print_callback = [&logger_mtx, &log_stream, &first](uint64_t res)
+        auto print_callback = [&logger_mtx, &log_stream, &first](std::string res)
         {
              logger_mtx.lock();
             
@@ -145,7 +146,7 @@ int main(int argc, char** argv) {
                  log_stream << ", ";
              }
              first = false;
-             log_stream << res;
+             log_stream << hex_string(res);
             
              logger_mtx.unlock();
         };

@@ -77,11 +77,11 @@ std::list<index_type> DiscohServer::search(const SearchRequest& req)
                 logger::log(logger::DBG) << "Derived token: " << hex_string(ut) << std::endl; 
             }
             //std::string ut;
-            found = edb_.get((const uint8_t*) ut.c_str(), ut.size(), r);
+            found = edb_.get(ut, r);
             
             if (found) {
                 if (logger::severity() <= logger::DBG) { 
-                    logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl; 
+                    logger::log(logger::DBG) << "Found: " << std::hex << hex_string(r) << std::endl; 
                 }
             
                 r = xor_mask(r, mask);
@@ -91,7 +91,12 @@ std::list<index_type> DiscohServer::search(const SearchRequest& req)
             
                 results.push_back(r);
                 if (logger::severity() <= logger::DBG) { 
-                    logger::log(logger::DBG) << "result index: " << (uint64_t) r << std::endl; 
+                    logger::log(logger::DBG) << "result index: " << hex_string(r)  << std::endl; 
+                }
+            }
+            else {
+                if (logger::severity() <= logger::DBG) { 
+                    logger::log(logger::DBG) << "Not Found: " << i << ", " << j << std::endl; 
                 }
             }
             logger::log(logger::DBG) << i << ", " << j << std::endl;
@@ -128,12 +133,13 @@ std::list<index_type> DiscohServer::search(const SearchRequest& req)
                     logger::log(logger::DBG) << "Derived token: " << hex_string(ut) << std::endl; 
                 } 
 
-                found = edb_.get((const uint8_t*) ut.c_str(), ut.size(), r);
+                found = edb_.get(ut, r);
+                // found = edb_.get((const uint8_t*)ut.c_str(), ut.size(), r); //FIXME: DO NOT use this function!
                 
                 if (found) {
 
                     if (logger::severity() <= logger::DBG) {
-                        logger::log(logger::DBG) << "Found: " << std::hex << r << std::endl; 
+                        logger::log(logger::DBG) << "Found: " << (r) << std::endl; 
                     }
 
                     r = xor_mask(r, mask); 
@@ -143,13 +149,18 @@ std::list<index_type> DiscohServer::search(const SearchRequest& req)
                     }
                     post_callback(r); 
                     if (logger::severity() <= logger::DBG) { 
-                        logger::log(logger::DBG) << "result index: " << (uint64_t) r << std::endl; 
+                        logger::log(logger::DBG) << "result index: " << (r) << std::endl; 
+                    }
+                } else {
+                    if (logger::severity() <= logger::DBG) { 
+                        logger::log(logger::DBG) << "Not Found: " << std::endl; 
                     }
                 }
                 logger::log(logger::DBG) << i << ", " << j << std::endl;
                 j++;
             } while(found);
             st = crypto::Hash::hash(st); 
+            // logger::log(logger::DBG) << "st, " << j << std::endl;
         }
     }
     
@@ -593,7 +604,12 @@ void DiscohServer::update(const UpdateRequest& req)
     }
 
 //    edb_.add(req.token, req.index);
-    edb_.put(req.token, std::to_string(req.index));
+    edb_.put(req.token, req.index);
+}
+
+void DiscohServer::flush_edb()
+{
+    edb_.flush();
 }
 
 std::ostream& DiscohServer::print_stats(std::ostream& out) const
