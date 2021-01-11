@@ -222,14 +222,24 @@ namespace sse {
             //assert(success); 
             uint32_t local_counter; 
             get_and_increase_local_counter(keyword, local_counter);
-            
+                
             st = inverse_tdp().generate_array(rsa_prg_, seed);
-            
+
             if (shared_global_counter==0) {
                 logger::log(logger::DBG) << "ST0 " << hex_string(st) << std::endl;
             }else{
-                st = inverse_tdp().invert_mult(st, shared_global_counter);
-                
+
+                if (local_counter == 0){// if the search token is not generated
+                    st = inverse_tdp().invert_mult(st, shared_global_counter);
+                    cache_search_token(keyword, st); 
+                }
+                else {
+                    bool success = get_cached_search_token(keyword, st);
+                    if(!success) {
+                        st = inverse_tdp().invert_mult(st, shared_global_counter);
+                        cache_search_token(keyword, st); 
+                    }
+                }
                 if (logger::severity() <= logger::DBG) {
                     logger::log(logger::DBG) << "New ST " << hex_string(st) << std::endl;
                 }
@@ -328,5 +338,28 @@ namespace sse {
             }
             local_counter_map[keyword] = keyword_local_counter; 
         } 
+
+        bool DiscotClient::get_cached_search_token(const std::string &keyword, search_token_type& search_token)
+        {
+            //std::unique_lock<std::mutex> lock(keyword_search_token_map_mtx_);
+
+            auto  it = keyword_search_token_map.find(keyword); 
+
+            if(it != keyword_search_token_map.end()) {
+                search_token =  it->second;
+            }
+            else{
+                logger::log(logger::ERROR) << "We are supposed to find the cached search token!" << std::endl; 
+                return false;
+            }
+            return true; 
+        }
+
+        void DiscotClient::cache_search_token(const std::string &keyword, search_token_type search_token)
+        {
+            std::unique_lock<std::mutex> lock(keyword_search_token_map_mtx_);
+            keyword_search_token_map[keyword] = search_token; 
+        }
+
     }
 }

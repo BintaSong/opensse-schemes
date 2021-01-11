@@ -105,8 +105,15 @@ namespace sse {
 
             std::map<std::string, uint32_t> local_counter_map; // record level-2 local counter during batch update
             std::mutex local_counter_map_mtx_;
-            
+
             uint32_t get_and_increase_local_counter(const std::string &keyword, uint32_t &keyword_local_counter); 
+
+            std::map<std::string, search_token_key_type> keyword_search_token_map; // record level-2 local counter during batch update
+            std::mutex keyword_search_token_map_mtx_;
+            
+            bool get_cached_search_token(const std::string &keyword, search_token_key_type& search_token);
+
+            void cache_search_token(const std::string &keyword, search_token_key_type search_token);
         };
         
         
@@ -217,6 +224,30 @@ namespace sse {
         }
 
         template <typename T>
+        bool DiscogClient<T>::get_cached_search_token(const std::string &keyword, search_token_key_type& search_token)
+        {
+            //std::unique_lock<std::mutex> lock(keyword_search_token_map_mtx_);
+
+            auto  it = keyword_search_token_map.find(keyword); 
+
+            if(it != keyword_search_token_map.end()) {
+                search_token = it->second;
+            }
+            else{
+                logger::log(logger::ERROR) << "We are supposed to find the cached search token!" << std::endl; 
+                return false;
+            }
+            return true; 
+        }
+
+        template <typename T>
+        void DiscogClient<T>::cache_search_token(const std::string &keyword, search_token_key_type search_token)
+        {
+            std::unique_lock<std::mutex> lock(keyword_search_token_map_mtx_);
+            keyword_search_token_map[keyword] = search_token; 
+        }
+
+        template <typename T>
         SearchRequest   DiscogClient<T>::search_request(const std::string &keyword, bool log_not_found) const
         {
             keyword_index_type kw_index = get_keyword_index(keyword);
@@ -271,11 +302,19 @@ namespace sse {
             get_and_increase_local_counter(keyword, local_counter);
 
             // assert(success);
-            
-            TokenTree::token_type root = root_prf_.prf(kw_index.data(), kw_index.size());
-            
-            st = TokenTree::derive_node(root, global_counter, kTreeDepth);
-            
+            if (local_counter == 0) {
+                TokenTree::token_type root = root_prf_.prf(kw_index.data(), kw_index.size());
+                st = TokenTree::derive_node(root, global_counter, kTreeDepth);
+                cache_search_token(keyword, st); 
+            }
+            else {
+                bool success = get_cached_search_token(keyword, st); 
+                if (!success) {
+                    TokenTree::token_type root = root_prf_.prf(kw_index.data(), kw_index.size());
+                    st = TokenTree::derive_node(root, global_counter, kTreeDepth);
+                    cache_search_token(keyword, st); 
+                }
+            }
             //if (logger::severity() <= logger::DBG) {
             //logger::log(logger::DBG) << "[CLIENT] New ST: " << hex_string(st) << " for global counter: "<< global_counter << std::endl;
             //}

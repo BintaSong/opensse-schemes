@@ -184,7 +184,17 @@ namespace sse {
                 logger::log(logger::DBG) << "Derivation key: " << hex_string(deriv_key) << std::endl;
             }
             
-            st = gen_search_token(seed, global_counter);
+            if (local_counter == 0) {
+                st = gen_search_token(seed, global_counter);
+                cache_search_token(keyword, st);
+            }
+            else {
+                bool success = get_cached_search_token(keyword, st);
+                if (!success) {
+                    st = gen_search_token(seed, global_counter);
+                    cache_search_token(keyword, st);
+                }
+            }
 
             if (logger::severity() <= logger::DBG) {
                 logger::log(logger::DBG) << "ST: " << hex_string(st) << std::endl;
@@ -253,5 +263,27 @@ namespace sse {
             }
             local_counter_map[keyword] = keyword_local_counter; 
         } 
+
+        bool DiscohClient::get_cached_search_token(const std::string &keyword, search_token_type& search_token)
+        {
+            //std::unique_lock<std::mutex> lock(keyword_search_token_map_mtx_);
+
+            auto  it = keyword_search_token_map.find(keyword); 
+
+            if(it != keyword_search_token_map.end()) {
+                search_token =  it->second;
+            }
+            else{
+                logger::log(logger::ERROR) << "We are supposed to find the cached search token!" << std::endl; 
+                return false;
+            }
+            return true; 
+        }
+
+        void DiscohClient::cache_search_token(const std::string &keyword, search_token_type search_token)
+        {
+            std::unique_lock<std::mutex> lock(keyword_search_token_map_mtx_);
+            keyword_search_token_map[keyword] = search_token; 
+        }
     }
 }

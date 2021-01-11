@@ -83,6 +83,13 @@ namespace sse {
             std::mutex local_counter_map_mtx_;
             
             uint32_t get_and_increase_local_counter(const std::string &keyword, uint32_t &keyword_local_counter); 
+
+            std::map<std::string, search_token_type> keyword_search_token_map; // record level-2 local counter during batch update
+            std::mutex keyword_search_token_map_mtx_;
+            
+            bool get_cached_search_token(const std::string &keyword, search_token_type& search_token);
+
+            void cache_search_token(const std::string &keyword, search_token_type search_token); 
         }; 
     } // namespace discoh 
 } // namespace sse 
