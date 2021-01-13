@@ -4,11 +4,12 @@
 c=10
 N=10000
 db="discog.csdb"
-r=`expr $N / $c`
+#r=`expr $N / $c`
+client="./discog_client"
 
 echo $r
 
 for k in $( seq 1 $c )
 do
-    ./discog_client -b $db -r $r -e
+    $client -b $db -r $N -e $c
 done

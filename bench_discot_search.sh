@@ -1,7 +1,7 @@
 #!/bin/bash 
 
-db_file="discog.csdb"
-client="./discog_client"
+db_file="discot.csdb"
+client="./discot_client"
 
 kw_list=""
 kKeywordGroupBase="Group-"

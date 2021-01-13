@@ -166,32 +166,6 @@ namespace sse
             return grpc::Status::OK;
         }
 
-#define PRINT_BENCH_SEARCH(t, c) \
-    "SEARCH: " + (((c) != 0) ? std::to_string((t) / (c)) + " ms/pair, " + std::to_string((c)) + " pairs" : std::to_string((t)) + " ms, no pair found")
-
-        //#define PRINT_BENCH_SEARCH_PAR_RPC(t,c) \
-//"Search: " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair (with RPC), " + std::to_string((c)) + " pairs" : \
-//std::to_string((t)) + " ms, no pair found" )
-        //
-        //#define PRINT_BENCH_SEARCH_PAR_NORPC(t,c) \
-//"Search: " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair (without RPC), " + std::to_string((c)) + " pairs" : \
-//std::to_string((t)) + " ms, no pair found" )
-        //
-
-        //#define PRINT_BENCH_SEARCH_PAR_RPC(t,c) \
-//"Search (with PRC): " + std::to_string((c)) + " " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair" : \
-//std::to_string((t)) + " ms, no pair found" )
-        //
-        //#define PRINT_BENCH_SEARCH_PAR_NORPC(t,c) \
-//"Search: " + (((c) != 0) ?  std::to_string((t)/(c)) + " ms/pair (without RPC), " + std::to_string((c)) + " pairs" : \
-//std::to_string((t)) + " ms, no pair found" )
-
-#define PRINT_BENCH_SEARCH_PAR_RPC(t, c) \
-    std::to_string((c)) + " \t\t " + (((c) != 0) ? std::to_string((t) / (c)) : std::to_string((t)))
-
-#define PRINT_BENCH_SEARCH_PAR_NORPC(t, c) \
-    std::to_string((c)) + " \t\t " + (((c) != 0) ? std::to_string((t) / (c)) : std::to_string((t)))
-
         grpc::Status DiscohImpl::search(grpc::ServerContext *context,
                                         const discoh::SearchRequestMessage *mes,
                                         grpc::ServerWriter<discoh::SearchReply> *writer)

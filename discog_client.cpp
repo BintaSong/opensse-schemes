@@ -157,8 +157,9 @@ int main(int argc, char** argv) {
         std::ostream& log_stream = sse::logger::log(sse::logger::INFO);
         bool first = true;
         
-        auto print_callback = [&logger_mtx, &log_stream, &first, print_results](uint64_t res)
-        {
+        std::atomic_uint res_size(0);
+        auto print_callback = [&logger_mtx, &log_stream, &first, &res_size, print_results](uint64_t res)
+        {   /* FIXME: NOT PRINTING
             if (print_results) {
              logger_mtx.lock();
 
@@ -169,14 +170,18 @@ int main(int argc, char** argv) {
              log_stream << res;
             
              logger_mtx.unlock();
-            }
+            }*/
+            res_size++;
         };
         
-        log_stream << "Search results: \n{";
+        // log_stream << "Search results: \n{";
 
-        auto res = client_runner->search(kw, print_callback);
+        // auto res = client_runner->search(kw, print_callback);
+
+        BENCHMARK_Q((client_runner->search(kw, print_callback)),res_size, PRINT_BENCH_SEARCH_PAR_RPC)
         
-        log_stream << "}" << std::endl;
+        // log_stream << "}" << std::endl;
+         log_stream << "result size:" << res_size << std::endl;
     }
     
     

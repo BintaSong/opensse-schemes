@@ -145,9 +145,10 @@ int main(int argc, char** argv) {
         std::ostream& log_stream = sse::logger::log(sse::logger::INFO);
         bool first = true;
         
-        auto print_callback = [&logger_mtx, &log_stream, &first](std::string res)
+        std::atomic_uint res_size(0);
+        auto print_callback = [&logger_mtx, &log_stream, &first, &res_size](std::string res)
         {
-             logger_mtx.lock();
+            /* logger_mtx.lock();
             
              if (!first) {
                  log_stream << ", ";
@@ -156,13 +157,17 @@ int main(int argc, char** argv) {
              log_stream << hex_string(res);
             
              logger_mtx.unlock();
+             */
+            res_size++;
         };
         
-        log_stream << "Search results: \n{";
+        //log_stream << "Search results: \n{";
 
-        auto res = client_runner->search(kw, print_callback);
-        
-        log_stream << "}" << std::endl;
+        //auto res = client_runner->search(kw, print_callback);
+        BENCHMARK_Q((client_runner->search(kw, print_callback)),res_size, PRINT_BENCH_SEARCH_PAR_RPC);
+        log_stream << "result size: " << res_size << std::endl;
+
+        //log_stream << "}" << std::endl;
     }
     
 //    if (bench_count > 0) {
