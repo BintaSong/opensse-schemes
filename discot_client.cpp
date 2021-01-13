@@ -34,9 +34,10 @@ int main(int argc, char** argv) {
     bool print_stats = false;
     uint32_t bench_count = 0;
     uint32_t rnd_entries_count = 0;
+    uint32_t global_up_count = 0;
     bool new_batch = false;
     
-    while ((c = getopt (argc, argv, "l:b:o:i:t:dper:")) != -1)
+    while ((c = getopt (argc, argv, "l:b:o:i:t:dpe:r:")) != -1)
         switch (c)
     {
         case 'l':
@@ -56,7 +57,8 @@ int main(int argc, char** argv) {
             print_stats = true;
             break;
         case 'e':
-            new_batch = true;
+            // new_batch = true;
+            global_up_count = (uint32_t)std::stod(std::string(optarg),nullptr);
             break;
         case 'r':
             rnd_entries_count = (uint32_t)std::stod(std::string(optarg),nullptr);
@@ -104,10 +106,10 @@ int main(int argc, char** argv) {
     
     client_runner.reset( new sse::discot::DiscotClientRunner("localhost:4240", client_db, setup_size, n_keywords) );
     
-    if (new_batch == true) 
-    {
-        client_runner->prepare_new_batch(); 
-    }
+    //if (new_batch == true) 
+    //{
+    //    client_runner->prepare_new_batch(); 
+    //}
 
     for (std::string &path : input_files) {
         sse::logger::log(sse::logger::INFO) << "Load file " << path << std::endl;
@@ -125,9 +127,15 @@ int main(int argc, char** argv) {
             client_runner->async_update(s, i);
         };
         
-        client_runner->start_update_session();
-        sse::sophos::gen_db(rnd_entries_count, gen_callback);
-        client_runner->end_update_session();
+        
+        for ( uint32_t i = 0; i < global_up_count; i++){
+
+            client_runner->prepare_new_batch(); 
+
+            client_runner->start_update_session();
+            sse::sophos::disco_gen_db(rnd_entries_count/global_up_count, i * rnd_entries_count/global_up_count, gen_callback);
+            client_runner->end_update_session();
+        }
     }
     
     for (std::string &kw : keywords) {

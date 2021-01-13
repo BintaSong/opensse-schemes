@@ -28,5 +28,8 @@
 namespace sse {
     namespace sophos {
         void gen_db(size_t N_entries, std::function<void(const std::string &, size_t)> callback);
+        
+        // only for disco db generation
+        void disco_gen_db(size_t N_entries, size_t global_up_rnd_counter, std::function<void(const std::string &, size_t)> callback);
     }
 }
