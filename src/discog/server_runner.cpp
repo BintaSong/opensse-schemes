@@ -287,14 +287,15 @@ namespace sse {
             logger::log(logger::TRACE) << "Updating (bulk)..." << std::endl;
             
             UpdateRequestMessage mes;
-            
+
+            uint32_t counter = 0;
             while (reader->Read(&mes)) {
                 server_->update(message_to_request(&mes));
+                counter++;
             }
             
-            logger::log(logger::TRACE) << "Updating (bulk)... done" << std::endl;
-            
-            
+            logger::log(logger::TRACE) << "Updating (bulk)... done, total updates: "<< counter << std::endl;
+                        
             flush_server_storage();
             
             return grpc::Status::OK;
