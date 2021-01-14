@@ -7,9 +7,5 @@ db="discog.csdb"
 #r=`expr $N / $c`
 client="./discog_client"
 
-echo $r
 
-for k in $( seq 1 $c )
-do
-    $client -b $db -r $N -e $c
-done
+$client -b $db -r $N -e $c

@@ -7,9 +7,4 @@ db="discot.csdb"
 #r=`expr $N / $c`
 client="./discot_client"
 
-echo $r
-
-for k in $( seq 1 $c )
-do
-    $client -b $db -r $N -e $c
-done
+$client -b $db -r $N -e $c
