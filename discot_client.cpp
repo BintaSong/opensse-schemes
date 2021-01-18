@@ -104,7 +104,7 @@ int main(int argc, char** argv) {
         n_keywords = 1.4*rnd_entries_count/(10*std::thread::hardware_concurrency());
     }
     
-    client_runner.reset( new sse::discot::DiscotClientRunner("localhost:4240", client_db, setup_size, n_keywords) );
+    client_runner.reset( new sse::discot::DiscotClientRunner("localhost:6262", client_db, setup_size, n_keywords) );
     
     //if (new_batch == true) 
     //{
@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
         sse::logger::log(sse::logger::INFO) << "Done loading file " << path << std::endl;
     }
     
-    if (rnd_entries_count > 0) {
+    if (rnd_entries_count >= 0) {
         sse::logger::log(sse::logger::INFO) << "Randomly generating database with " << rnd_entries_count << " docs" << std::endl;
         
 //        auto post_callback = [&writer, &res_size, &writer_lock](index_type i)
@@ -127,15 +127,15 @@ int main(int argc, char** argv) {
             client_runner->async_update(s, i);
         };
         
-        
+        client_runner->start_update_session();
         for ( uint32_t i = 0; i < global_up_count; i++){
 
-            client_runner->prepare_new_batch(); 
-
-            client_runner->start_update_session();
-            sse::sophos::disco_gen_db(rnd_entries_count/global_up_count, i * rnd_entries_count/global_up_count, gen_callback);
-            client_runner->end_update_session();
+            client_runner->prepare_new_batch();     
+            sse::sophos::disco_gen_db(rnd_entries_count/global_up_count, i * (rnd_entries_count/global_up_count), gen_callback);
+        
         }
+        
+        client_runner->end_update_session();
     }
     
     for (std::string &kw : keywords) {

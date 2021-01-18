@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
         sse::logger::log(sse::logger::INFO) << "Running client with database " << server_db << std::endl;
     }
 
-    sse::discoh::run_discoh_server("0.0.0.0:4240", server_db, &server_ptr__, async_search);
+    sse::discoh::run_discoh_server("0.0.0.0:5252", server_db, &server_ptr__, async_search);
     
     sse::crypto::cleanup_crypto_lib();
 

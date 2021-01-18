@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
         sse::logger::log(sse::logger::INFO) << "Done loading file " << path << std::endl;
     }
     
-    if (rnd_entries_count > 0) {
+    if (rnd_entries_count >= 0) {
         sse::logger::log(sse::logger::INFO) << "Randomly generating database with " << rnd_entries_count << " docs" << std::endl;
 
         std::mutex buffer_mtx;
@@ -145,7 +145,7 @@ int main(int argc, char** argv) {
             client_runner->prepare_new_batch(); 
 
             client_runner->start_update_session();
-            sse::sophos::disco_gen_db(rnd_entries_count/global_up_count, i * rnd_entries_count/global_up_count, gen_callback);
+            sse::sophos::disco_gen_db(rnd_entries_count/global_up_count, i * (rnd_entries_count/global_up_count), gen_callback);
             client_runner->end_update_session();
         }
     }

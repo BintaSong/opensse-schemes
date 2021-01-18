@@ -53,7 +53,7 @@ namespace sse {
             typedef std::array<uint8_t, kKeywordIndexSize> keyword_index_type;
             typedef T index_type;
 
-            static constexpr size_t kTreeDepth = 48;
+            static constexpr size_t kTreeDepth = 14;
             
             DiscogClient(const std::string& counter_path);
             DiscogClient(const std::string& counter_path, const std::string& derivation_master_key, const std::string& kw_token_master_key, const uint32_t global_counter);
