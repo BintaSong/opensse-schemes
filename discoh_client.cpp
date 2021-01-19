@@ -122,21 +122,24 @@ int main(int argc, char** argv) {
         
 //        auto post_callback = [&writer, &res_size, &writer_lock](index_type i)
 
-        auto gen_callback = [&client_runner](const std::string &s, size_t i)
+        std::atomic_uint upt_size(0);
+        auto gen_callback = [&client_runner, &upt_size](const std::string &s, size_t i)
         {
             std::string index( reinterpret_cast<const char*>(&i), sse::discoh::kIndexSize );
             client_runner->async_update(s, index);
+            upt_size++;
         };
-        client_runner->start_update_session();
-        for ( uint32_t i = 0; i < global_up_count; i++){
+        
+        BENCHMARK_Q((
+        {   
+            client_runner->start_update_session();
+            for ( uint32_t i = 0; i < global_up_count; i++){
 
-            client_runner->prepare_new_batch(); 
-
-            
-            sse::sophos::disco_gen_db(rnd_entries_count/global_up_count, i * (rnd_entries_count/global_up_count), gen_callback);
-            
-        }
-        client_runner->end_update_session();
+                client_runner->prepare_new_batch();     
+                sse::sophos::disco_gen_db(rnd_entries_count/global_up_count, i * (rnd_entries_count/global_up_count), gen_callback);
+            }
+            client_runner->end_update_session();
+        }), upt_size, PRINT_BENCH_SEARCH_PAR_RPC);
     }
     
     for (std::string &kw : keywords) {

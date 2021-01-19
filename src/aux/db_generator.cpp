@@ -895,7 +895,7 @@ namespace sse {
             std::atomic_size_t entries_counter(0);
             std::atomic_size_t docs_counter(0);
 
-            unsigned int n_threads = 1; //std::thread::hardware_concurrency();
+            unsigned int n_threads = 1;//std::thread::hardware_concurrency();
             std::vector<std::thread> threads;
             std::mutex rpc_mutex;
             

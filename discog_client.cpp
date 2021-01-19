@@ -125,9 +125,10 @@ int main(int argc, char** argv) {
 
         std::mutex buffer_mtx;
 
-        auto gen_callback = [&client_runner](const std::string &s, size_t i)
+        std::atomic_uint upt_size(0);
+        auto gen_callback = [&client_runner, &upt_size](const std::string &s, size_t i)
         {
-            /*if (buffer_list__ == NULL) {
+            if (buffer_list__ == NULL) {
                 buffer_list__ = new std::list<std::pair<std::string, uint64_t>>();
             }
             buffer_list__->push_back(std::make_pair(s, i));
@@ -136,18 +137,22 @@ int main(int argc, char** argv) {
                 client_runner->async_update(*buffer_list__);
                 
                 buffer_list__->clear();
-            }*/
-            client_runner->async_update(s, i);
+            }
+            //client_runner->async_update(s, i);
+            upt_size++;
         };
         
-        for ( uint32_t i = 0; i < global_up_count; i++){
-
-            client_runner->prepare_new_batch(); 
-
+        BENCHMARK_Q((
+        {   
             client_runner->start_update_session();
-            sse::sophos::disco_gen_db(rnd_entries_count/global_up_count, i * (rnd_entries_count/global_up_count), gen_callback);
+            for ( uint32_t i = 0; i < global_up_count; i++){
+
+                client_runner->prepare_new_batch();     
+                sse::sophos::disco_gen_db(rnd_entries_count/global_up_count, i * (rnd_entries_count/global_up_count), gen_callback);
+            }
             client_runner->end_update_session();
-        }
+        }), upt_size, PRINT_BENCH_SEARCH_PAR_RPC);
+
     }
     
     for (std::string &kw : keywords) {

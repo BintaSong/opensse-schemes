@@ -29,7 +29,7 @@ def read_benchmark(s_ben, i, j):
         line = f.readline()
     
     for i in time:
-        time[i] = time[i] / count[i] / int(i)
+        time[i] = time[i] / count[i] 
     return time
 
 def read_sophos(s_ben, i, j):
@@ -47,7 +47,7 @@ def read_sophos(s_ben, i, j):
         line = f.readline()
     
     for t in time:
-        time[t] = time[t] / count[t] / int(t) 
+        time[t] = time[t] / count[t]
     return time
 
 
@@ -58,7 +58,7 @@ pl.figure(figsize=(10,8))
 
 style = ['k^-','r+-', 'b.-' ]
 #===============================================
-time = read_benchmark('fast-14e6.server.benchmark', 1, 3)
+time = read_benchmark('benchmark_discog_client.out', 0, 1)
 print "fast:", time
 x = [ '10', '100', '1000', '10000', '100000']
 y = [time[key] for key in x]
@@ -70,7 +70,7 @@ x = [1, 2, 3, 4, 5]
 pl.plot(x, y, style[0], linewidth=1.9, markersize=13, label="FAST")# use pylab to plot x and y
 
 #===============================================
-time = read_benchmark('fastio-14e6.server.benchmark', 1, 2)
+time = read_benchmark('benchmark_discog_client.out', 0, 1)
 print "fastio", time
 #time['10000'] = 0.006664441828932286
 x = ['10', '100', '1000', '10000', '100000']
@@ -88,7 +88,7 @@ pl.xticks(x, group_labels, rotation=0)
 
 
 ##===============================================
-time = read_sophos('sophos-14e6.server.benchmark', 0, 1)
+time = read_benchmark('benchmark_discog_client.out', 0, 1)
 print "sophos", time
 #time['10000'] = 0.006664441828932286
 #time['100000'] = 0.006774441828932286
